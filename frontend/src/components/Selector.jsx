@@ -12,7 +12,7 @@ import { LANGUAGES } from "../constants";
 
 const languages = Object.entries(LANGUAGES);
 
-const Selector = ({ language, onSelect }) => {
+const Selector = ({ language, onSelect, fontSize, onFontSize }) => {
     const { colorMode, toggleColorMode } = useColorMode();
 
     return (
@@ -46,6 +46,9 @@ const Selector = ({ language, onSelect }) => {
         <Button variant="outline" onClick={toggleColorMode} ml={4}>
             {colorMode === "dark" ? "Light" : "Dark"}
         </Button>
+        <Button variant="outline" onClick={() => onFontSize(-1)} ml={4}>-</Button>
+        <Text as="span" mx={2} fontSize="sm">{fontSize}px</Text>
+        <Button variant="outline" onClick={() => onFontSize(1)}>+</Button>
     </Box>
   );
 };

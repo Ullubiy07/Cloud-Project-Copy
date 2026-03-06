@@ -11,6 +11,11 @@ const CodeEditor = () => {
     const [value, setValue] = useState("");
     const [language, setLanguage] = useState("python");
     const { colorMode } = useColorMode();
+    const [fontSize, setFontSize] = useState(14);
+
+    const onFontSize = (delta) => {
+        setFontSize(prev => Math.min(24, Math.max(10, prev + delta)));
+    };
 
     const onMount = (editor) => {
         editorRef.current = editor;
@@ -24,7 +29,12 @@ const CodeEditor = () => {
     
     return (
         <Box>
-            <Selector language={language} onSelect={onSelect} />
+            <Selector
+                language={language}
+                onSelect={onSelect}
+                fontSize={fontSize}
+                onFontSize={onFontSize}
+            />
             <HStack spacing={4} alignItems="flex-start">
 
                 <Box w="50%">
@@ -38,7 +48,7 @@ const CodeEditor = () => {
                         onChange={(value) => setValue(value)}
                         options={{
                             minimap: { enabled: false },
-                            fontSize: 18,
+                            fontSize: fontSize,
                             scrollBeyondLastLine: false,
                         }}
                     />
