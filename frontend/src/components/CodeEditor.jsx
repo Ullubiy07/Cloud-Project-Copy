@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Box, HStack, VStack } from "@chakra-ui/react";
+import { Box, HStack, useColorMode, VStack } from "@chakra-ui/react";
 import { Editor } from "@monaco-editor/react";
 import { SNIPPETS } from "../constants";
 import Selector from "./Selector";
@@ -10,6 +10,7 @@ const CodeEditor = () => {
     const editorRef = useRef();
     const [value, setValue] = useState("");
     const [language, setLanguage] = useState("python");
+    const { colorMode } = useColorMode();
 
     const onMount = (editor) => {
         editorRef.current = editor;
@@ -20,22 +21,26 @@ const CodeEditor = () => {
         setLanguage(language);
         setValue(SNIPPETS[language]);
     };
-
+    
     return (
         <Box>
             <Selector language={language} onSelect={onSelect} />
-
             <HStack spacing={4} alignItems="flex-start">
 
                 <Box w="50%">
                     <Editor
-                        height="75vh"
-                        theme="vs-dark"
+                        height="100vh"
+                        theme={colorMode === "dark" ? "vs-dark" : "light"}
                         language={language}
                         defaultValue={SNIPPETS[language]}
                         onMount={onMount}
                         value={value}
                         onChange={(value) => setValue(value)}
+                        options={{
+                            minimap: { enabled: false },
+                            fontSize: 18,
+                            scrollBeyondLastLine: false,
+                        }}
                     />
                 </Box>
 

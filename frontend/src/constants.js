@@ -1,5 +1,5 @@
 export const LANGUAGES = {
-    python: "3.11",
+    python: "3.12",
     javascript: "18.15",
 };
 

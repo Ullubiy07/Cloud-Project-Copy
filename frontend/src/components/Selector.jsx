@@ -6,15 +6,18 @@ import {
   MenuItem,
   MenuList,
   Text,
+  useColorMode,
 } from "@chakra-ui/react";
 import { LANGUAGES } from "../constants";
 
 const languages = Object.entries(LANGUAGES);
 
 const Selector = ({ language, onSelect }) => {
-  return (
-    <Box ml={2} mb={4}>
-        <Button variant="outline" colorScheme="green" mr={2}>
+    const { colorMode, toggleColorMode } = useColorMode();
+
+    return (
+    <Box ml={2} m={4}>
+        <Button variant="outline" colorScheme="green" mr={4}>
             Run
         </Button>
         <Menu isLazy>
@@ -39,7 +42,10 @@ const Selector = ({ language, onSelect }) => {
                     )
                 )}
             </MenuList>
-      </Menu>
+        </Menu>
+        <Button variant="outline" onClick={toggleColorMode} ml={4}>
+            {colorMode === "dark" ? "Light" : "Dark"}
+        </Button>
     </Box>
   );
 };
