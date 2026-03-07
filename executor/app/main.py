@@ -1,65 +1,54 @@
 from fastapi import FastAPI
 import subprocess
+import resource
 
 from schema import Request, Response
 from manager import FileManager, FileNameError
-from stats import parseTime
-from config import commands, TIME_LIMIT, MEM_LIMIT
+from config import *
 
 
 app = FastAPI(
     title="Executor",
-    docs_url=None,
-    redoc_url=None,
-    openapi_url=None
+    # docs_url=None,
+    # redoc_url=None,
+    # openapi_url=None
 )
+
+def set_cpu_limit():
+    resource.setrlimit(resource.RLIMIT_CPU, (TIME_LIMIT, TIME_LIMIT))
 
 
 @app.post("/run", response_model=Response)
 def run_code(request: Request):
 
-    return_code = 1
-    stdout, stderr = "", ""
-    time, memory = 0, 0
-    timeout = False
-    TEST_PATH = "/home/user/tests"
+    res = Response()
 
     try:
-        with FileManager(directory=TEST_PATH, files=request.files, language=request.language) as manager:
+        with FileManager(directory=TEST_PATH, data=res.metrics, files=request.files, language=request.language) as manager:
             process = subprocess.run(
-                ["/usr/bin/time", "-f", "STATS=%e=%M",
+                ["/usr/bin/time", "-f", "%e %M", "-o", manager.stats,
+                "timeout", "--preserve-status", f"{TIME_LIMIT}s",
                 "/bin/bash", "-c", commands[request.language]],
                 user="user",
                 input=request.stdin,
                 capture_output=True,
                 text=True,
-                timeout=TIME_LIMIT,
+                timeout=TIME_LIMIT + 1,
+                preexec_fn=set_cpu_limit,
                 cwd=manager.session_dir
             )
-            return_code = process.returncode
-            time, memory, stderr = parseTime(process.stderr)
-            stdout = process.stdout
+            res.set_output(process)
 
     except subprocess.TimeoutExpired as e:
-        timeout = True
-        time = TIME_LIMIT
-        stderr = "Time limit exceeded"
-        stdout = e.stdout.decode() if e.stdout else ""
+        res.time_limit(e)
     except FileNameError as e:
-        stderr = str(e)
+        res.set_error(str(e), 1)
     except Exception as e:
-        stderr = "Internal server error"
+        res.set_error("Internal server error", 124)
     
-    return {
-        "return_code": return_code,
-        "stdout": stdout,
-        "stderr": stderr,
-        "flags": {
-            "timeout": timeout,
-            "mem_out": memory > MEM_LIMIT,
-        },
-        "metrics": {
-            "time": f"{time}s",
-            "phys_mem": f"{memory}M"
-        }
-    }
+    if res.rc == 137:
+        res.memory_limit()
+    if res.rc == 143:
+        res.time_limit()
+
+    return res

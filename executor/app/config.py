@@ -1,5 +1,7 @@
-TIME_LIMIT = 5.00
+TIME_LIMIT = 5
 MEM_LIMIT = 256
+
+TEST_PATH = "/home/user/tests"
 
 commands = {
     "python": "python main.py",
