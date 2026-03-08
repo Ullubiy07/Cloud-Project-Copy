@@ -7,7 +7,7 @@ RUN pip --no-cache-dir install -r /code/requirements.txt
 
 RUN apt-get update && apt-get install -y \
     time \
-    nodejs \
+    golang-go \
     && rm -rf /var/lib/apt/lists/*
 
 COPY app .
@@ -16,8 +16,8 @@ RUN useradd -m -u 1001 user \
     && mkdir -p /home/user/tests \
     && chmod -R 700 .
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080", "--no-access-log"]
 
 # for development
-# docker build -t node -f Dockerfile.node .
-# docker run --rm --name Executor -p 8080:8080 -v $(pwd)/app:/code --memory="512m" node
+# docker build -t go -f images/Dockerfile.go .
+# docker run --rm --name Executor -p 8080:8080 -v $(pwd)/app:/code --memory="160m" go

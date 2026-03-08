@@ -12,10 +12,14 @@ RUN pip --no-cache-dir install -r /code/requirements.txt
 COPY app /code/
 
 RUN useradd -m -u 1001 user \
-    && mkdir -p /home/user/tests \
-    && chmod -R 700 .
+    && mkdir /home/user/tests \
+    && chmod 555 /home/user \
+    && chmod 777 /home/user/tests
+
+USER user
 
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080", "--no-access-log"]
+# CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080", "--reload"]
 
 # for development
 # docker build -t python -f images/Dockerfile.python .

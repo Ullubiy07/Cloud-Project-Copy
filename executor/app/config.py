@@ -6,6 +6,6 @@ TEST_PATH = "/home/user/tests"
 commands = {
     "python": "python main.py",
     "c++": "g++ main.cpp -o main; ./main",
-    "node": "node main.js",
-    "golang": "go build -o main main.go; ./main"
+    "javascript": "node main.js",
+    "go": "go build -o main main.go; ./main"
 }

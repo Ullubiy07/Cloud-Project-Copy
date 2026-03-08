@@ -27,15 +27,13 @@ def run_code(request: Request):
         with FileManager(directory=TEST_PATH, data=res.metrics, files=request.files, language=request.language) as manager:
             process = subprocess.run(
                 ["/usr/bin/time", "-f", "%e %M", "-o", manager.stats,
-                "timeout", "--preserve-status", f"{TIME_LIMIT}s",
                 "/bin/bash", "-c", commands[request.language]],
-                user="user",
                 input=request.stdin,
                 capture_output=True,
                 text=True,
-                timeout=TIME_LIMIT + 1,
+                timeout=TIME_LIMIT,
                 preexec_fn=set_cpu_limit,
-                cwd=manager.session_dir
+                cwd=manager.base_dir
             )
             res.set_output(process)
 
@@ -45,8 +43,9 @@ def run_code(request: Request):
         res.set_error(str(e), 1)
     except Exception as e:
         res.set_error("Internal server error", 124)
+        print(e)
     
-    if res.rc == 137:
+    if res.rc == 137 or res.rc == 127:
         res.memory_limit()
     if res.rc == 143:
         res.time_limit()
