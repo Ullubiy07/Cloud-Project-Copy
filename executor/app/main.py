@@ -3,63 +3,53 @@ import subprocess
 
 from schema import Request, Response
 from manager import FileManager, FileNameError
-from stats import parseTime
-from config import commands, TIME_LIMIT, MEM_LIMIT
+from config import *
 
 
 app = FastAPI(
     title="Executor",
-    docs_url=None,
-    redoc_url=None,
-    openapi_url=None
+    # docs_url=None,
+    # redoc_url=None,
+    # openapi_url=None
 )
-
 
 @app.post("/run", response_model=Response)
 def run_code(request: Request):
 
-    return_code = 1
-    stdout, stderr = "", ""
-    time, memory = 0, 0
-    timeout = False
-    TEST_PATH = "/home/user/tests"
+    res = Response()
 
     try:
-        with FileManager(directory=TEST_PATH, files=request.files, language=request.language) as manager:
-            process = subprocess.run(
-                ["/usr/bin/time", "-f", "STATS=%e=%M",
-                "/bin/bash", "-c", commands[request.language]],
-                user="user",
+        with FileManager(directory=TEST_PATH, data=res.metrics, files=request.files, language=request.language) as manager:
+            
+            build_process = subprocess.run(
+                build_cmd(request.language, manager.build_stats),
+                capture_output=True,
+                text=True,
+                timeout=TIME_LIMIT,
+                preexec_fn=set_cpu_limit,
+                cwd=manager.base_dir
+            )
+            if build_process.returncode != 0:
+                res.set_output(build_process, "build")
+                return res
+
+            run_process = subprocess.run(
+                run_cmd(request.language, manager.run_stats, request.entry_file),
                 input=request.stdin,
                 capture_output=True,
                 text=True,
                 timeout=TIME_LIMIT,
-                cwd=manager.session_dir
+                preexec_fn=set_cpu_limit,
+                cwd=manager.base_dir
             )
-            return_code = process.returncode
-            time, memory, stderr = parseTime(process.stderr)
-            stdout = process.stdout
+            res.set_output(run_process, "run")
 
     except subprocess.TimeoutExpired as e:
-        timeout = True
-        time = TIME_LIMIT
-        stderr = "Time limit exceeded"
-        stdout = e.stdout.decode() if e.stdout else ""
+        res.time_limit(e)
     except FileNameError as e:
-        stderr = str(e)
+        res.set_error(str(e), 1)
     except Exception as e:
-        stderr = "Internal server error"
-    
-    return {
-        "return_code": return_code,
-        "stdout": stdout,
-        "stderr": stderr,
-        "flags": {
-            "timeout": timeout,
-            "mem_out": memory > MEM_LIMIT,
-        },
-        "metrics": {
-            "time": f"{time}s",
-            "phys_mem": f"{memory}M"
-        }
-    }
+        res.set_error("Internal server error", 124)
+        print(e)
+
+    return res
