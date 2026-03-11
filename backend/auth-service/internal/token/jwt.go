@@ -1,0 +1,66 @@
+package token
+
+import (
+	"fmt"
+	"time"
+
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
+)
+
+type Claims struct {
+	UserID   uuid.UUID `json:"user_id"`
+	Username string    `json:"username"`
+	Email    string    `json:"email"`
+	jwt.RegisteredClaims
+}
+
+type TokenService struct {
+	secretKey []byte
+	issuer    string
+	validity  time.Duration
+}
+
+func NewTokenService(secretKey string, issuer string, validity time.Duration) *TokenService {
+	return &TokenService{
+		secretKey: []byte(secretKey),
+		issuer:    issuer,
+		validity:  validity,
+	}
+}
+
+func (s *TokenService) GenerateToken(userID uuid.UUID, username, email string) (string, error) {
+	claims := &Claims{
+		UserID:   userID,
+		Username: username,
+		Email:    email,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.validity)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			NotBefore: jwt.NewNumericDate(time.Now()),
+			Issuer:    s.issuer,
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString(s.secretKey)
+}
+
+func (s *TokenService) ValidateToken(tokenString string) (*Claims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return s.secretKey, nil
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse token: %w", err)
+	}
+
+	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
+		return claims, nil
+	}
+
+	return nil, fmt.Errorf("invalid token")
+}
