@@ -12,10 +12,9 @@ RUN pip --no-cache-dir install -r /code/requirements.txt
 
 COPY app /code/
 
-RUN useradd -m -u 1001 user \
-    && mkdir /home/user/tests \
-    && chmod 555 /home/user \
-    && chmod 777 /home/user/tests
+RUN useradd -u 1001 user \
+    && mkdir /tests \
+    && chown user /tests
 
 USER user
 

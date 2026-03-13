@@ -1,38 +1,49 @@
 import resource
 
 RUN_TIME_LIMIT = 5
-BUILD_TIME_LIMIT = 15
+BUILD_TIME_LIMIT = 10
 MEM_LIMIT = 256
 
-TEST_PATH = "/home/user/tests"
+TEST_PATH = "/tests"
 
-build = {
-    "python": "",
-    "c++": "g++ *.cpp -o main",
-    "javascript": "",
-    "go": "go build -ldflags='-s -w' -gcflags='all=-N -l' -o main *.go"
+config = {
+    "python": {
+        "type": "script",
+        "build": "",
+        "run": "python"
+    },
+    "javascript": {
+        "type": "script",
+        "build": "",
+        "run": "node"
+    },
+    "c++": {
+        "type": "compile",
+        "build": "g++ *.cpp -o main",
+        "run": "./main"
+    },
+    "go": {
+        "type": "compile",
+        "build": "go build -ldflags='-s -w' -gcflags='all=-N -l' -o main *.go",
+        "run": "./main"
+    }
 }
 
-run = {
-    "python": "python *.py",
-    "c++": "./main",
-    "javascript": "node *.js",
-    "go": "./main"
-}
 
 def set_cpu_limit():
     resource.setrlimit(resource.RLIMIT_CPU, (RUN_TIME_LIMIT, RUN_TIME_LIMIT))
 
-
-def build_cmd(lang, stats):
+def build_cmd(lang, stats_file):
+    time_wrap = f"/usr/bin/time -f '%e %M' -o {stats_file}"
     cmd = ""
-    if build[lang]:
-        cmd = f"/usr/bin/time -f '%e %M' -o {stats} {build[lang]}"
+    if config[lang]["type"] == "compile":
+        cmd = f"{time_wrap} {config[lang]['build']}"
     return ["/bin/bash", "-c", cmd]
 
-def run_cmd(lang, stats, entry_file):
-    tmp = run[lang]
-    if lang in ["python", "javascript"]:
-        tmp += " " + entry_file
-    cmd = f"/usr/bin/time -f '%e %M' -o {stats} {tmp}"
+def run_cmd(lang, stats_file, entry_file):
+    time_wrap = f"/usr/bin/time -f '%e %M' -o {stats_file}"
+    cmd = f"{time_wrap} {config[lang]['run']}"
+    if config[lang]["type"] == "script":
+        cmd += " " + entry_file
     return ["/bin/bash", "-c", cmd]
+    

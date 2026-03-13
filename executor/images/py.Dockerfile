@@ -9,17 +9,18 @@ WORKDIR /code
 COPY requirements.txt /code
 RUN pip --no-cache-dir install -r /code/requirements.txt
 
-COPY app /code/
+COPY app /code
+COPY rules /code/rules
+COPY sgconfig.yml /code/sgconfig.yml
 
-RUN useradd -m -u 1001 user \
-    && mkdir /home/user/tests \
-    && chmod 555 /home/user \
-    && chmod 777 /home/user/tests
+RUN useradd -u 1001 user \
+    && mkdir /tests \
+    && chown user /tests
 
 USER user
 
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080", "--no-access-log"]
 
 # for development
-# docker build -t python -f images/Dockerfile.python .
-# docker run --rm --name Executor -p 8080:8080 -v $(pwd)/app:/code --memory="512m" --memory-swap="512m" python
+# docker build -t python -f images/py.Dockerfile .
+# docker run --rm --name Executor -p 8080:8080 --memory="512m" --memory-swap="512m" python

@@ -7,6 +7,7 @@ import os
 
 
 from schema import File, Metrics, Response
+from config import TEST_PATH
 
 
 class FileNameError(Exception):
@@ -56,7 +57,7 @@ class FileManager:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.data.build_time, self.data.build_memory = self.parse_stats(self.build_stats)
         self.data.run_time, self.data.run_memory = self.parse_stats(self.run_stats)
-        os.system('rm -rf /home/user/tests/*')
+        os.system(f"rm -rf {TEST_PATH}/*")
 
 
 @contextmanager
@@ -69,3 +70,4 @@ def ExecManager(type: str, res: Response):
         res.set_error(str(e), type, 1)
     except Exception as e:
         res.set_error("Internal server error", type, 124)
+        print(e)

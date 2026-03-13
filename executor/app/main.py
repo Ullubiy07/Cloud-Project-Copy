@@ -20,6 +20,18 @@ def run_code(request: Request):
 
     try:
         with FileManager(directory=TEST_PATH, data=res.metrics, files=request.files, language=request.language) as manager:
+
+            # try:
+            #     scan_process = subprocess.run(
+            #         ["ast-grep", "scan", "--config", "/code/sgconfig.yml", "."],
+            #         capture_output=True,
+            #         text=True,
+            #         timeout=RUN_TIME_LIMIT,
+            #         cwd=manager.base_dir
+            #     )
+            #     print(scan_process.stdout)
+            # except Exception as e:
+            #     print(e)
             
             with ExecManager("build", res):
                 build_process = subprocess.run(
