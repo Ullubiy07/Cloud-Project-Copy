@@ -2,12 +2,10 @@ import uuid
 from pathlib import Path
 from typing import List
 from subprocess import TimeoutExpired
-from contextlib import contextmanager
 import os
 
-
-from schema import File, Metrics, Response
-from config import TEST_PATH
+from schema import File, Metrics, RunResponse
+from config import TEST_PATH, logger
 
 
 class FileNameError(Exception):
@@ -36,7 +34,7 @@ class FileManager:
                 time = f"{float(stats[0]):.2f} s"
                 memory = f"{round(int(stats[1]) / 1024, 2)} Mb"
         except Exception as e:
-            print(e)
+            logger.debug(e)
         return [time, memory]
 
     def __enter__(self):
@@ -60,14 +58,23 @@ class FileManager:
         os.system(f"rm -rf {TEST_PATH}/*")
 
 
-@contextmanager
-def ExecManager(type: str, res: Response):
-    try:
-        yield
-    except TimeoutExpired as e:
-        res.time_limit(type, e)
-    except FileNameError as e:
-        res.set_error(str(e), type, 1)
-    except Exception as e:
-        res.set_error("Internal server error", type, 124)
-        print(e)
+class ExecManager:
+    def __init__(self, type: str, res: RunResponse):
+        self.type = type
+        self.res = res
+    
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type == None:
+            return
+        if isinstance(exc_val, TimeoutExpired):
+            self.res.time_limit(self.type, exc_val)
+        elif isinstance(exc_val, FileNameError):
+            self.res.set_error(str(exc_val), self.type, 1)
+        else:
+            self.res.set_error("Internal server error", self.type, 124)
+            logger.debug(exc_val)
+        return True
+    

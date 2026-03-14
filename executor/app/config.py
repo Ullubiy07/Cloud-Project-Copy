@@ -1,10 +1,22 @@
 import resource
+import sys
+from loguru import logger
 
+logger.remove()
+logger.add(
+    sys.stdout, 
+    format="<green>{time:HH:mm:ss}</green> | <level>{level: ^7}</level> | <blue>{name}:{function}:{line}</blue> - <yellow>{message}</yellow>", 
+    level="DEBUG",
+    colorize=True
+)
+
+SCAN_TIME_LIMIT = 3
+BUILD_TIME_LIMIT = 7
 RUN_TIME_LIMIT = 5
-BUILD_TIME_LIMIT = 10
 MEM_LIMIT = 256
 
 TEST_PATH = "/tests"
+SCAN_CMD = ["ast-grep", "scan", "--config", "/code/sgconfig.yml", "."]
 
 config = {
     "python": {
@@ -28,7 +40,6 @@ config = {
         "run": "./main"
     }
 }
-
 
 def set_cpu_limit():
     resource.setrlimit(resource.RLIMIT_CPU, (RUN_TIME_LIMIT, RUN_TIME_LIMIT))

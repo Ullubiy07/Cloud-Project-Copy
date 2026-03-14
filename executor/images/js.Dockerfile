@@ -11,6 +11,8 @@ COPY requirements.txt /code
 RUN pip --no-cache-dir install -r /code/requirements.txt
 
 COPY app /code/
+COPY rules /code/rules
+COPY sgconfig.yml /code/sgconfig.yml
 
 RUN useradd -u 1001 user \
     && mkdir /tests \
@@ -18,8 +20,8 @@ RUN useradd -u 1001 user \
 
 USER user
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080", "--no-access-log"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
 
 # for development
 # docker build -t js -f images/Dockerfile.js .
-# docker run --rm --name Executor -p 8080:8080 -v $(pwd)/app:/code --memory="512m" --memory-swap="512m" js
+# docker run --rm --name Executor -p 8080:8080 --memory="512m" --memory-swap="512m" js

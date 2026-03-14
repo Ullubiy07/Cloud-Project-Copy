@@ -1,7 +1,6 @@
 from pydantic import BaseModel
-from typing import List
+from typing import List, Union
 
-from config import RUN_TIME_LIMIT
 from subprocess import CompletedProcess
 
 
@@ -12,6 +11,7 @@ class File(BaseModel):
 class Flags(BaseModel):
     timeout: bool = False
     mem_out: bool = False
+    scan_error: bool = False
     build_error: bool = False
     run_error: bool = False
 
@@ -21,13 +21,21 @@ class Metrics(BaseModel):
     run_time: str = "0.00 s"
     run_memory: str = "0.00 Mb"
 
-class Request(BaseModel):
+class RunRequest(BaseModel):
     language: str
     entry_file: str
     files: List[File]
     stdin: str
-    
-class Response(BaseModel):
+
+class ScanRequest(BaseModel):
+    language: str
+    files: List[File]
+
+class Requests(BaseModel):
+    handle: str
+    body: Union[RunRequest, ScanRequest]
+
+class RunResponse(BaseModel):
     rc: int = 1
     stdout: str = ""
     stderr: str = ""
@@ -38,8 +46,10 @@ class Response(BaseModel):
         if self.rc != 0:
             if type == "run":
                 self.flags.run_error = True
-            else:
+            elif type == "build":
                 self.flags.build_error = True
+            elif type == "scan":
+                self.flags.scan_error = True
 
     def set_error(self, message: str, type: str, rc: int):
         self.stderr = message
