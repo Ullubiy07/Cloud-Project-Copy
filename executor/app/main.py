@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 import subprocess
+import httpx
 
-from schema import Requests, RunRequest, RunResponse
+from schema import Requests, RunRequest, RunResponse, CloudTriggerRequest
 from manager import FileManager, ExecManager
 from config import *
 
@@ -13,7 +14,7 @@ app = FastAPI(
     # openapi_url=None
 )
 
-def run_code(request: RunRequest):
+def run_code(request: RunRequest) -> RunResponse:
 
     res = RunResponse()
 
@@ -70,21 +71,16 @@ def run_code(request: RunRequest):
 def preview(request: Requests):
     return
 
-# WEBHOOK_URL = "https://webhook.site/1f6e6cc7-5da7-4392-9801-ec84f58d4cea"
-
-# from fastapi import Request
-# import json
 
 @app.post("/")
-def handle_cloud_trigger(request: dict):
-    return "Error"
-    # req = await request.body()
-    # req = req.decode()
+async def handle_cloud_trigger(request: CloudTriggerRequest):
+    try:
+        body = request.messages[0].details.message.body
 
-    # data = json.loads(req)
+        if body.handle == "run":
+            result = run_code(body.body)
+            httpx.post(WEBHOOK_URL, json=result.dict())
 
-    # msg = data["messages"][0]
+    except Exception as e:
+        logger.debug(e)
 
-    # body = msg["details"]["message"]["body"]
-
-    

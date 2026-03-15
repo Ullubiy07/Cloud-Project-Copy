@@ -1,5 +1,6 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, root_validator
 from typing import List, Union
+import json
 
 from subprocess import CompletedProcess
 
@@ -34,6 +35,12 @@ class ScanRequest(BaseModel):
 class Requests(BaseModel):
     handle: str
     body: Union[RunRequest, ScanRequest]
+
+    @root_validator(pre=True)
+    def parse_body_string(data):
+        if isinstance(data, str):
+            return json.loads(data)
+        return data
 
 class RunResponse(BaseModel):
     rc: int = 1
@@ -78,3 +85,23 @@ class RunResponse(BaseModel):
             self.memory_limit(type)
         if self.rc == 143:
             self.time_limit(type)
+
+
+class Message(BaseModel):
+    message_id: str
+    md5_of_body: str
+    body: Requests
+    attributes: dict
+    message_attributes: dict
+    md5_of_message_attributes: str
+
+class Details(BaseModel):
+    queue_id: str
+    message: Message
+
+class MessageItem(BaseModel):
+    event_metadata: dict
+    details: Details
+
+class CloudTriggerRequest(BaseModel):
+    messages: List[MessageItem]
