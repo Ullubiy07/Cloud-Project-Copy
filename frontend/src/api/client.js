@@ -12,7 +12,7 @@ export async function apiLogin(username, password) {
         body: JSON.stringify({ username, password }),
     });
     if (!res.ok) throw new Error("Login failed");
-    return res.json(); // { token }
+    return res.json();
 }
 
 export async function apiRegister(username, email, password) {

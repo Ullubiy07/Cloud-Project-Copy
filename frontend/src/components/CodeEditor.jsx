@@ -6,17 +6,27 @@ import { apiRun } from "../api/client";
 import Selector from "./Selector";
 import Output from "./Output";
 import Input from "./Input";
+import Files from './Files';
 
 const CodeEditor = () => {
     const editorRef = useRef();
-    const [value, setValue] = useState("");
     const [language, setLanguage] = useState("python");
     const { colorMode } = useColorMode();
     const [fontSize, setFontSize] = useState(14);
-
+    const [activeFile, setActiveFile] = useState({ id: 1, name: "main.py" });
     const [output, setOutput] = useState(null);
     const [loading, setLoading] = useState(false);
     const [stdin, setStdin] = useState("");
+
+    const [fileContents, setFileContents] = useState({
+        1: SNIPPETS["python"],
+        2: "",
+    });
+
+    const [files, setFiles] = useState([
+        { id: 1, name: "main.py" },
+        { id: 2, name: "index.py" },
+    ]);
 
     const onFontSize = (delta) => {
         setFontSize(prev => Math.min(24, Math.max(10, prev + delta)));
@@ -29,19 +39,49 @@ const CodeEditor = () => {
 
     const onSelect = (language) => {
         setLanguage(language);
-        setValue(SNIPPETS[language]);
+        setFileContents(prev => ({
+            ...prev,
+            [activeFile.id]: SNIPPETS[language],
+        }));
+    };
+
+    const onFileSelect = (file) => {
+        if (editorRef.current) {
+            setFileContents(prev => ({
+                ...prev,
+                [activeFile.id]: editorRef.current.getValue(),
+            }));
+        }
+        setActiveFile(file);
+    };
+
+    const onCodeChange = (value) => {
+        setFileContents(prev => ({
+            ...prev,
+            [activeFile.id]: value,
+        }));
     };
 
     const onRun = async () => {
-        const code = editorRef.current.getValue();
+        const currentCode = editorRef.current.getValue();
+        const updatedContents = {
+            ...fileContents,
+            [activeFile.id]: currentCode,
+        };
+
+        const allFiles = files.map(f => ({
+            name: f.name,
+            content: updatedContents[f.id] ?? "",
+        }));
+
         setLoading(true);
         setOutput(null);
 
         try {
             const result = await apiRun(
                 language,
-                "main.py",
-                [{ name: "main.py", content: code }],
+                activeFile.name,
+                allFiles,
                 stdin
             );
             setOutput(result);
@@ -64,15 +104,40 @@ const CodeEditor = () => {
             />
             <HStack spacing={4} alignItems="flex-start">
 
-                <Box w="50%">
+                <Files
+                    activeFile={activeFile}
+                    onSelect={onFileSelect}
+                    files={files}
+                    onFileCreate={(newFile) => {
+                        setFiles(prev => [...prev, newFile]);
+                        setFileContents(prev => ({ ...prev, [newFile.id]: "" }));
+                        onFileSelect(newFile);
+                    }}
+                    onFileDelete={(id) => {
+                        setFiles(prev => prev.filter(f => f.id !== id));
+                        setFileContents(prev => {
+                            const updated = { ...prev };
+                            delete updated[id];
+                            return updated;
+                        });
+                        if (activeFile.id === id) {
+                            const remaining = files.filter(f => f.id !== id);
+                            if (remaining.length > 0) onFileSelect(remaining[0]);
+                        }
+                    }}
+                    onFileRename={(id, newName) => {
+                        setFiles(prev => prev.map(f => f.id === id ? { ...f, name: newName } : f));
+                    }}
+                />
+
+                <Box flex={1}>
                     <Editor
                         height="100vh"
                         theme={colorMode === "dark" ? "vs-dark" : "light"}
                         language={language}
-                        defaultValue={SNIPPETS[language]}
+                        value={fileContents[activeFile.id] ?? ""}
                         onMount={onMount}
-                        value={value}
-                        onChange={(value) => setValue(value)}
+                        onChange={onCodeChange}
                         options={{
                             minimap: { enabled: false },
                             fontSize: fontSize,

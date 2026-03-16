@@ -1,5 +1,5 @@
-import { Box } from '@chakra-ui/react'
-import CodeEditor from './components/CodeEditor'
+import { Box } from '@chakra-ui/react';
+import CodeEditor from './components/CodeEditor';
 import Navbar from './components/Navbar';
 
 function App() {
