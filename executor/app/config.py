@@ -40,6 +40,11 @@ config = {
         "type": "compile",
         "build": "go build -ldflags='-s -w' -gcflags='all=-N -l' -o main *.go",
         "run": "./main"
+    },
+    "assembler": {
+        "type": "compile",
+        "build": """bash -c 'for f in *.asm; do nasm -f elf64 "$f" -o "${f%.asm}.o"; done && gcc -c /include/macro.c -o __macro__.o && gcc -m64 -no-pie *.o -o main'""",
+        "run": "./main"
     }
 }
 

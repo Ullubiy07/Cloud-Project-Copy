@@ -71,7 +71,7 @@ class RunResponse(BaseModel):
                                               f"{hidden} {message} hidden]")
         return stdout
 
-    def time_limit(self, type: str, error=None):
+    def time_limit(self, type: str):
         self.flags.timeout = True
         self.set_error("Time limit exceeded", type, 124)
     
