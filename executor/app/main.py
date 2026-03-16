@@ -3,7 +3,7 @@ import subprocess
 import httpx
 
 from schema import Requests, RunRequest, RunResponse, CloudTriggerRequest
-from manager import FileManager, ExecManager
+from manager import FileManager, Execution
 from config import *
 
 
@@ -21,7 +21,7 @@ def run_code(request: RunRequest) -> RunResponse:
     try:
         with FileManager(directory=TEST_PATH, data=res.metrics, files=request.files, language=request.language) as manager:
 
-            with ExecManager("scan", res):
+            with Execution("scan", res):
                 scan_process = subprocess.run(
                     SCAN_CMD,
                     capture_output=True,
@@ -34,7 +34,7 @@ def run_code(request: RunRequest) -> RunResponse:
                 res.set_output(scan_process, "scan")
                 return res
             
-            with ExecManager("build", res):
+            with Execution("build", res):
                 build_process = subprocess.run(
                     build_cmd(request.language, manager.build_stats),
                     capture_output=True,
@@ -48,7 +48,7 @@ def run_code(request: RunRequest) -> RunResponse:
                 res.set_output(build_process, "build")
                 return res
             
-            with ExecManager("run", res):
+            with Execution("run", res):
                 run_process = subprocess.run(
                     run_cmd(request.language, manager.run_stats, request.entry_file),
                     input=request.stdin,

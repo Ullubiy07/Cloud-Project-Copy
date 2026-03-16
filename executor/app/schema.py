@@ -3,7 +3,7 @@ from typing import List, Union
 import json
 
 from subprocess import CompletedProcess
-
+from config import OUTPUT_LIMIT
 
 class File(BaseModel):
     name: str
@@ -62,13 +62,18 @@ class RunResponse(BaseModel):
         self.stderr = message
         self.rc = rc
         self.set_flag(type)
+    
+    def set_stdout(self, stdout):
+        if len(stdout) > OUTPUT_LIMIT:
+            hidden = len(stdout) - OUTPUT_LIMIT
+            message = "char was" if hidden == 1 else "chars were"
+            stdout = stdout[:OUTPUT_LIMIT] + (f"\n[Output truncated to {OUTPUT_LIMIT} chars, "
+                                              f"{hidden} {message} hidden]")
+        return stdout
 
     def time_limit(self, type: str, error=None):
         self.flags.timeout = True
-        # self.metrics.run_time = f"{TIME_LIMIT:.2f} s"
         self.set_error("Time limit exceeded", type, 124)
-        if error:
-            self.stdout = error.stdout.decode() if error.stdout else ""
     
     def memory_limit(self, type: str):
         self.flags.mem_out = True
@@ -77,7 +82,7 @@ class RunResponse(BaseModel):
     def set_output(self, process: CompletedProcess, type: str):
         self.rc = process.returncode
         self.stderr = process.stderr
-        self.stdout = process.stdout
+        self.stdout = self.set_stdout(process.stdout)
 
         self.set_flag(type)
 

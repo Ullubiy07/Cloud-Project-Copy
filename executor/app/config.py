@@ -14,9 +14,10 @@ SCAN_TIME_LIMIT = 3
 BUILD_TIME_LIMIT = 7
 RUN_TIME_LIMIT = 5
 MEM_LIMIT = 256
+OUTPUT_LIMIT = 16 * 1024
 
 TEST_PATH = "/tests"
-WEBHOOK_URL = "https://webhook.site/1f6e6cc7-5da7-4392-9801-ec84f58d4cea"
+WEBHOOK_URL = "*"
 SCAN_CMD = ["ast-grep", "scan", "--config", "/code/sgconfig.yml", "."]
 
 config = {

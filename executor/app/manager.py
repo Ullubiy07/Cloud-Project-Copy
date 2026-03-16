@@ -58,10 +58,11 @@ class FileManager:
         os.system(f"rm -rf {TEST_PATH}/*")
 
 
-class ExecManager:
-    def __init__(self, type: str, res: RunResponse):
+class Execution:
+    def __init__(self, type: str, res: RunResponse, process=None):
         self.type = type
         self.res = res
+        self.proc = process
     
     def __enter__(self):
         return self
@@ -70,7 +71,7 @@ class ExecManager:
         if exc_type == None:
             return
         if isinstance(exc_val, TimeoutExpired):
-            self.res.time_limit(self.type, exc_val)
+            self.res.time_limit(self.type)
         elif isinstance(exc_val, FileNameError):
             self.res.set_error(str(exc_val), self.type, 1)
         else:
