@@ -46,18 +46,6 @@ type StandardResponse struct {
 	Message string `json:"message"`
 }
 
-// Register godoc
-// @Summary Register a new user
-// @Description Register a new user with username, email and password
-// @Tags auth
-// @Accept json
-// @Produce json
-// @Param request body RegisterRequest true "Register Request"
-// @Success 201 {object} StandardResponse
-// @Failure 400 {object} StandardResponse
-// @Failure 409 {object} StandardResponse
-// @Failure 500 {object} StandardResponse
-// @Router /auth/register [post]
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var req RegisterRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -118,19 +106,6 @@ func (h *AuthHandler) respondWithError(w http.ResponseWriter, code int, message 
 		Message: message,
 	})
 }
-
-// Login godoc
-// @Summary Login user
-// @Description Login with username and password
-// @Tags auth
-// @Accept json
-// @Produce json
-// @Param request body LoginRequest true "Login Request"
-// @Success 200 {object} TokenResponse
-// @Failure 400 {object} StandardResponse
-// @Failure 401 {object} StandardResponse
-// @Failure 500 {object} StandardResponse
-// @Router /auth/login [post]
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

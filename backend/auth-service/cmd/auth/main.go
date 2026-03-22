@@ -14,16 +14,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/jackc/pgx/v5/pgxpool"
-	httpSwagger "github.com/swaggo/http-swagger/v2"
-
-	_ "auth/docs"
 )
 
-// @title Auth Service API
-// @version 1.0
-// @description Authentication service.
-// @host localhost:3000
-// @BasePath /
 func main() {
 	cfg, err := config.Load()
 	if err != nil {
@@ -46,11 +38,6 @@ func main() {
 
 	r.Post("/auth/register", authHandler.Register)
 	r.Post("/auth/login", authHandler.Login)
-
-	// Swagger documentation
-	r.Get("/swagger/*", httpSwagger.Handler(
-		httpSwagger.URL("http://localhost:3000/swagger/doc.json"),
-	))
 
 	log.Printf("Starting server on port %s", cfg.Port)
 	if err := http.ListenAndServe(":"+cfg.Port, r); err != nil {
