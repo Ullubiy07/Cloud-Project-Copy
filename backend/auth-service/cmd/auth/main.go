@@ -24,7 +24,7 @@ func main() {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	
+
 	dbpool, err := pgxpool.New(ctx, cfg.DatabaseURL)
 	if err != nil {
 		log.Fatalf("Unable to connect to database: %v", err)
@@ -41,6 +41,7 @@ func main() {
 
 	r.Post("/auth/register", authHandler.Register)
 	r.Post("/auth/login", authHandler.Login)
+	r.Post("/auth/reset-password", authHandler.ResetPassword)
 
 	srv := &http.Server{
 		Addr:         ":" + cfg.Port,

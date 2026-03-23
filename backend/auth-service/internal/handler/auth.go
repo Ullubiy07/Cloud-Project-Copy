@@ -141,3 +141,50 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(TokenResponse{Token: tokenStr})
 }
+
+type ResetPasswordRequest struct {
+	Token    string `json:"token"`
+	Password string `json:"password"`
+}
+
+func (h *AuthHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
+	var req ResetPasswordRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.respondWithError(w, http.StatusBadRequest, "Invalid request payload")
+		return
+	}
+
+	if req.Token == "" || req.Password == "" {
+		h.respondWithError(w, http.StatusBadRequest, "Token and password are required")
+		return
+	}
+
+	if len(req.Password) < 8 {
+		h.respondWithError(w, http.StatusBadRequest, "Password must be at least 8 characters long")
+		return
+	}
+
+	claims, err := h.tokenService.ValidateToken(req.Token)
+	if err != nil {
+		h.respondWithError(w, http.StatusUnauthorized, "Invalid or expired token")
+		return
+	}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		h.respondWithError(w, http.StatusInternalServerError, "Internal server error")
+		return
+	}
+
+	if err := h.store.UpdatePassword(r.Context(), claims.UserID, string(hashedPassword)); err != nil {
+		h.respondWithError(w, http.StatusInternalServerError, "Internal server error")
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(StandardResponse{
+		Status:  "ok",
+		Message: "Password updated successfully",
+	})
+}

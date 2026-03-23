@@ -98,3 +98,19 @@ func (s *UserStore) GetUserByID(ctx context.Context, id uuid.UUID) (*model.User,
 	}
 	return &user, nil
 }
+
+func (s *UserStore) UpdatePassword(ctx context.Context, id uuid.UUID, passwordHash string) error {
+	query := `
+		UPDATE users
+		SET password_hash = $1, updated_at = NOW()
+		WHERE id = $2
+	`
+	tag, err := s.db.Exec(ctx, query, passwordHash, id)
+	if err != nil {
+		return fmt.Errorf("failed to update password: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrUserNotFound
+	}
+	return nil
+}
