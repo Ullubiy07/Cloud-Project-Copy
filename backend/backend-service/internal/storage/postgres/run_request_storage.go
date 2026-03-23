@@ -28,20 +28,20 @@ func (s *Storage) CreateRunRequest(ctx context.Context, req *model.RunRequest) e
 
 	filesJSON, err := json.Marshal(req.Files)
 	if err != nil {
-		return fmt.Errorf("failed to marshal files: %v", err)
+		return fmt.Errorf("failed to marshal files: %w", err)
 	}
 
 	err = s.db.QueryRow(ctx, query,
 		req.UserID,
 		req.Language,
 		req.EntryFile,
-		string(filesJSON),
+		filesJSON,
 		req.Stdin,
 		req.Status,
 	).Scan(&req.ID, &req.CreatedAt, &req.UpdatedAt)
 
 	if err != nil {
-		return fmt.Errorf("failed to insert run request: %v", err)
+		return fmt.Errorf("failed to insert run request: %w", err)
 	}
 
 	return nil
@@ -56,7 +56,7 @@ func (s *Storage) GetRunRequestsByUser(ctx context.Context, userID uuid.UUID) ([
 	`
 	rows, err := s.db.Query(ctx, query, userID)
 	if err != nil {
-		return nil, fmt.Errorf("query failed: %v", err)
+		return nil, fmt.Errorf("query failed: %w", err)
 	}
 	defer rows.Close()
 
@@ -68,13 +68,18 @@ func (s *Storage) GetRunRequestsByUser(ctx context.Context, userID uuid.UUID) ([
 			&req.ID, &req.UserID, &req.Language, &req.EntryFile,
 			&filesJSON, &req.Stdin, &req.Status, &req.Stdout, &req.Stderr, &req.ExitCode, &req.ErrorMessage, &req.CreatedAt, &req.UpdatedAt,
 		); err != nil {
-			return nil, fmt.Errorf("scan failed: %v", err)
+			return nil, fmt.Errorf("scan failed: %w", err)
 		}
 		if err := json.Unmarshal(filesJSON, &req.Files); err != nil {
-			return nil, fmt.Errorf("failed to parse files: %v", err)
+			return nil, fmt.Errorf("failed to parse files: %w", err)
 		}
 		requests = append(requests, req)
 	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("row iteration error: %w", err)
+	}
+
 	if requests == nil {
 		requests = []model.RunRequest{}
 	}
@@ -97,7 +102,7 @@ func (s *Storage) GetRunRequestByID(ctx context.Context, id uuid.UUID, userID uu
 		return nil, fmt.Errorf("query single failed: %w", err)
 	}
 	if err := json.Unmarshal(filesJSON, &req.Files); err != nil {
-		return nil, fmt.Errorf("failed to parse files: %v", err)
+		return nil, fmt.Errorf("failed to parse files: %w", err)
 	}
 	return &req, nil
 }
@@ -110,7 +115,7 @@ func (s *Storage) UpdateRunRequestStatus(ctx context.Context, id uuid.UUID, payl
 	`
 	tag, err := s.db.Exec(ctx, query, payload.Status, payload.Stdout, payload.Stderr, payload.ExitCode, payload.ErrorMessage, id)
 	if err != nil {
-		return fmt.Errorf("failed to update run request status: %v", err)
+		return fmt.Errorf("failed to update run request status: %w", err)
 	}
 	if tag.RowsAffected() == 0 {
 		return fmt.Errorf("run request not found")
