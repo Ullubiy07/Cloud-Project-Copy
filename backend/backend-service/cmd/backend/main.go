@@ -6,8 +6,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"auth/internal/app"
-	"auth/internal/config"
+	"backend/internal/app"
+	"backend/internal/config"
 )
 
 func main() {
@@ -39,5 +39,5 @@ func main() {
 	<-stop
 
 	application.Stop()
-	slog.Info("auth-service stopped")
+	slog.Info("run-service stopped")
 }
