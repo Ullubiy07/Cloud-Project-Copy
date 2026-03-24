@@ -13,6 +13,7 @@ jobs:
     env:
       DEPLOY_DIRECTORY: /root/apps/cloud-project
       ENV_FILE_PATH: /root/apps/cloud-project/.env
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
     steps:
       - name: Checkout repository

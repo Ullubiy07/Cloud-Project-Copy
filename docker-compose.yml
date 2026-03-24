@@ -1,10 +1,22 @@
 services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - auth-service
+      - backend-service
+
   auth-service:
     build:
       context: ./backend/auth-service
       dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
     environment:
       - DATABASE_URL=postgres://user:password@db:5432/auth_db?sslmode=disable
       - JWT_SECRET=${JWT_SECRET:-dev_secret_key}
@@ -18,8 +30,6 @@ services:
     build:
       context: ./backend/backend-service
       dockerfile: Dockerfile
-    ports:
-      - "3001:3001"
     environment:
       - DATABASE_URL=postgres://user:password@db:5432/backend_db?sslmode=disable
       - JWT_SECRET=${JWT_SECRET:-dev_secret_key}
@@ -51,3 +61,5 @@ services:
 
 volumes:
   postgres_data:
+  caddy_data:
+  caddy_config:

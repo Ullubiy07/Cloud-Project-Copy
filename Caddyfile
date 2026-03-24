@@ -1,0 +1,9 @@
+lnkea.ru {
+    handle /auth/* {
+        reverse_proxy auth-service:3000
+    }
+    
+    handle /api/* {
+        reverse_proxy backend-service:3001
+    }
+}
