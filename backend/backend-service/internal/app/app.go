@@ -56,11 +56,11 @@ func New(cfg *config.Config) (*App, error) {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	r.Post("/run", runHandler.RunRequest)
-	r.Get("/run-requests", runHandler.GetRunRequests)
-	r.Get("/run-requests/{id}", runHandler.GetRunRequest)
+	r.Post("/api/run", runHandler.RunRequest)
+	r.Get("/api/run-requests", runHandler.GetRunRequests)
+	r.Get("/api/run-requests/{id}", runHandler.GetRunRequest)
 
-	r.Post("/internal/runs/{id}/status", runHandler.UpdateExecutionStatus)
+	r.Post("/api/internal/runs/{id}/status", runHandler.UpdateExecutionStatus)
 
 	srv := &http.Server{
 		Addr:         ":" + cfg.Port,
