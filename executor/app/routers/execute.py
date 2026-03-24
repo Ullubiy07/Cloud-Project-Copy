@@ -31,7 +31,6 @@ def run_code(request: RunRequest) -> RunResponse:
                     capture_output=True,
                     text=True,
                     timeout=env.BUILD_TIME_LIMIT,
-                    preexec_fn=set_cpu_limit,
                     cwd=manager.base_dir
                 )
 

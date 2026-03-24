@@ -30,14 +30,14 @@ class RunRequest(BaseModel):
 
 
 class RunResponse(BaseModel):
-    status: str = "Completed"
+    status: str = "Internal error"
     stdout: str = ""
     stderr: str = ""
     flags: Flags = Flags()
     metrics: Metrics = Metrics()
     exit_code: int = 1
 
-    def set_flag(self, type: str):
+    def set_status(self, type: str):
         if self.exit_code != 0:
             if type == "scan":
                 self.status = "Scan error"
@@ -45,13 +45,15 @@ class RunResponse(BaseModel):
                 self.status = "Build error"
             elif type == "run":
                 self.status = "Runtime error"
+        else:
+            self.status = "Completed"
 
     def set_error(self, message: str, type: str, exit_code: int):
         self.stderr = message
         self.exit_code = exit_code
-        self.set_flag(type)
+        self.set_status(type)
     
-    def set_stdout(self, stdout):
+    def trunc_stdout(self, stdout):
         if len(stdout) > env.OUTPUT_LIMIT:
             hidden = len(stdout) - env.OUTPUT_LIMIT
             message = "char was" if hidden == 1 else "chars were"
@@ -70,11 +72,11 @@ class RunResponse(BaseModel):
     def set_output(self, process: CompletedProcess, type: str):
         self.exit_code = process.returncode
         self.stderr = process.stderr
-        self.stdout = self.set_stdout(process.stdout)
-
-        self.set_flag(type)
+        self.stdout = self.trunc_stdout(process.stdout)
 
         if self.exit_code == 137:
             self.memory_limit(type)
-        if self.exit_code == 143:
+        elif self.exit_code in (143, 124, 152):
             self.time_limit(type)
+        else:
+            self.set_status(type)

@@ -26,9 +26,9 @@ go:
 assembler:
   type: "compile"
   build: >
-    bash -c 'for f in *.asm; do nasm -f elf64 "$f" -o "${f%.asm}.o"; done 
-    && gcc -c /include/macro.c -o __macro__.o 
-    && gcc -m64 -no-pie *.o -o main'
+    bash -c 'for f in *.asm; do nasm -f elf32 "$f" -o "${f%.asm}.o"; done 
+    && gcc -m32 -c /include/macro.c -o __macro__.o 
+    && gcc -m32 -static -no-pie *.o -o main'
   run: "./main"
 
 sql:

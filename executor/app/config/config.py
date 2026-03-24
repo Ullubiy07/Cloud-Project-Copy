@@ -12,7 +12,9 @@ logger.add(
     sys.stdout, 
     format="<green>{time:HH:mm:ss}</green> | <level>{level: ^7}</level> | <blue>{name}:{function}:{line}</blue> - <yellow>{message}</yellow>", 
     level="DEBUG",
-    colorize=True
+    colorize=True,
+    backtrace=True,
+    diagnose=True
 )
 
 # environment
@@ -39,7 +41,7 @@ SCAN_CMD = ["ast-grep", "scan", "--config", "/code/sgconfig.yml", "."]
 
 # functions
 def set_cpu_limit():
-    resource.setrlimit(resource.RLIMIT_CPU, (env.RUN_TIME_LIMIT, env.RUN_TIME_LIMIT))
+    resource.setrlimit(resource.RLIMIT_CPU, (env.RUN_TIME_LIMIT, env.RUN_TIME_LIMIT + 1))
 
 def build_cmd(lang, stats_file):
     time_wrap = f"/usr/bin/time -f '%e %M' -o {stats_file}"

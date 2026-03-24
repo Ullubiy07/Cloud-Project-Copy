@@ -1,4 +1,6 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, status
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 import httpx
 
 from schemas.cloud import Requests, CloudTriggerRequest
@@ -14,6 +16,17 @@ app = FastAPI(
 @app.post("/preview")
 def preview(request: Requests):
     return
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    exc_str = f'{exc}'.replace('\n', ' ').replace('   ', ' ')
+    logger.debug(f"422 Validation Error: {exc_str}")
+    logger.debug(f"Content that caused error: {exc.body}")
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        content={"detail": exc.errors(), "body": exc.body},
+    )
 
 
 @app.post("/")
