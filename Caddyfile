@@ -1,5 +1,5 @@
 lnkea.ru {
-    handle /auth/* {
+    handle /api/auth/* {
         reverse_proxy auth-service:3000
     }
     
