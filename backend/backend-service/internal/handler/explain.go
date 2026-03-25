@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"backend/internal/gigachat"
-	"backend/internal/model"
 	"backend/internal/token"
 )
 
@@ -24,7 +23,7 @@ func NewExplainHandler(client *gigachat.Client, tokenService *token.TokenService
 }
 
 type ExplainRequest struct {
-	Files []model.File `json:"files"`
+	Code string `json:"code"`
 }
 
 func (h *ExplainHandler) extractUser(r *http.Request) (*token.Claims, error) {
@@ -61,21 +60,12 @@ func (h *ExplainHandler) ExplainCode(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	if len(req.Files) == 0 {
-		h.respondWithError(w, http.StatusBadRequest, "Files cannot be empty")
+	if strings.TrimSpace(req.Code) == "" {
+		h.respondWithError(w, http.StatusBadRequest, "Code cannot be empty")
 		return
 	}
 
-	var codeBuilder strings.Builder
-	for _, f := range req.Files {
-		codeBuilder.WriteString("--- File: ")
-		codeBuilder.WriteString(f.Name)
-		codeBuilder.WriteString(" ---\n")
-		codeBuilder.WriteString(f.Content)
-		codeBuilder.WriteString("\n\n")
-	}
-
-	explanation, err := h.client.ExplainCode(r.Context(), codeBuilder.String())
+	explanation, err := h.client.ExplainCode(r.Context(), req.Code)
 	if err != nil {
 		slog.Error("failed to get explanation from gigachat", slog.Any("error", err))
 		h.respondWithError(w, http.StatusInternalServerError, "Failed to analyze code")
