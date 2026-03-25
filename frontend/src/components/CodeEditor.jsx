@@ -2,16 +2,21 @@ import { useRef, useState } from "react";
 import { Box, HStack, useColorMode, VStack } from "@chakra-ui/react";
 import { Editor } from "@monaco-editor/react";
 import { SNIPPETS, DEFAULT_FILES } from "../constants";
-import { apiRun, apiGetRun } from "../api/client";
+import { apiRun, apiGetRun, apiExplain } from "../api/client";
 import Selector from "./Selector";
 import Output from "./Output";
 import Input from "./Input";
 import Files from './Files';
+import Explain from "./Explain";
 
 const POLL_INTERVAL_MS = 1500;
 const POLL_TIMEOUT_MS = 60000;
 
-const CodeEditor = () => {
+const LANGUAGE_MAP = {
+    cpp: "c++",
+};
+
+const CodeEditor = ({ user }) => {
     const editorRef = useRef();
     const [language, setLanguage] = useState("python");
     const { colorMode } = useColorMode();
@@ -20,6 +25,9 @@ const CodeEditor = () => {
     const [output, setOutput] = useState(null);
     const [loading, setLoading] = useState(false);
     const [stdin, setStdin] = useState("");
+    const [explanation, setExplanation] = useState("");
+    const [explainLoading, setExplainLoading] = useState(false);
+    const [explainOpen, setExplainOpen] = useState(false);
 
     const [fileContents, setFileContents] = useState({
         1: SNIPPETS["python"],
@@ -39,16 +47,16 @@ const CodeEditor = () => {
         editor.focus();
     };
 
-    const onSelect = (language) => {
-        setLanguage(language);
-        const newName = DEFAULT_FILES[language];
+    const onSelect = (lang) => {
+        setLanguage(lang);
+        const newName = DEFAULT_FILES[lang];
         setActiveFile(prev => ({ ...prev, name: newName }));
         setFiles(prev => prev.map(f =>
             f.id === activeFile.id ? { ...f, name: newName } : f
         ));
         setFileContents(prev => ({
             ...prev,
-            [activeFile.id]: SNIPPETS[language] ?? "",
+            [activeFile.id]: SNIPPETS[lang] ?? "",
         }));
     };
 
@@ -71,13 +79,10 @@ const CodeEditor = () => {
 
     const pollResult = async (id) => {
         const start = Date.now();
-
         while (Date.now() - start < POLL_TIMEOUT_MS) {
             await new Promise(r => setTimeout(r, POLL_INTERVAL_MS));
-
             const res = await apiGetRun(id);
             const run = res.data;
-
             if (run.status === "completed" || run.status === "failed") {
                 return {
                     stdout: run.stdout ?? "",
@@ -86,12 +91,7 @@ const CodeEditor = () => {
                 };
             }
         }
-
         throw new Error("Execution timed out");
-    };
-
-    const LANGUAGE_MAP = {
-        cpp: "c++",
     };
 
     const onRun = async () => {
@@ -100,11 +100,7 @@ const CodeEditor = () => {
             return;
         }
         const currentCode = editorRef.current.getValue();
-        const updatedContents = {
-            ...fileContents,
-            [activeFile.id]: currentCode,
-        };
-
+        const updatedContents = { ...fileContents, [activeFile.id]: currentCode };
         const allFiles = files.map(f => ({
             name: f.name,
             content: updatedContents[f.id] ?? "",
@@ -119,13 +115,27 @@ const CodeEditor = () => {
             const enqueued = await apiRun(mappedLanguage, activeFile.name, allFiles, stdin);
             const id = enqueued.data?.id;
             if (!id) throw new Error("No run ID returned");
-
             const result = await pollResult(id);
             setOutput(result);
         } catch (err) {
             setOutput({ stderr: err.message });
         } finally {
             setLoading(false);
+        }
+    };
+
+    const onExplain = async () => {
+        const code = editorRef.current.getValue();
+        setExplanation("");
+        setExplainOpen(true);
+        setExplainLoading(true);
+        try {
+            const res = await apiExplain(code);
+            setExplanation(res.data?.explanation ?? "No explanation received.");
+        } catch (err) {
+            setExplanation("Failed to get explanation. Please try again.");
+        } finally {
+            setExplainLoading(false);
         }
     };
 
@@ -138,9 +148,10 @@ const CodeEditor = () => {
                 onFontSize={onFontSize}
                 onRun={onRun}
                 loading={loading}
+                onExplain={onExplain}
+                user={user}
             />
             <HStack spacing={4} alignItems="flex-start">
-
                 <Files
                     activeFile={activeFile}
                     onSelect={onFileSelect}
@@ -187,8 +198,14 @@ const CodeEditor = () => {
                     <Input stdin={stdin} onStdin={setStdin} />
                     <Output output={output} loading={loading} />
                 </VStack>
-
             </HStack>
+
+            <Explain
+                isOpen={explainOpen}
+                onClose={() => setExplainOpen(false)}
+                explanation={explanation}
+                loading={explainLoading}
+            />
         </Box>
     );
 };

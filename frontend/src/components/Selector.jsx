@@ -6,7 +6,7 @@ import { LANGUAGES } from "../constants";
 
 const languages = Object.entries(LANGUAGES);
 
-const Selector = ({ language, onSelect, fontSize, onFontSize, onRun, loading }) => {
+const Selector = ({ language, onSelect, fontSize, onFontSize, onRun, loading, onExplain, user }) => {
     const { colorMode, toggleColorMode } = useColorMode();
 
     return (
@@ -46,6 +46,12 @@ const Selector = ({ language, onSelect, fontSize, onFontSize, onRun, loading }) 
             <Button variant="outline" onClick={() => onFontSize(-1)} ml={4}>-</Button>
             <Text as="span" mx={2} fontSize="sm">{fontSize}px</Text>
             <Button variant="outline" onClick={() => onFontSize(1)}>+</Button>
+
+            {user && (
+                <Button colorScheme="purple" variant="outline" ml={4} onClick={onExplain}>
+                    Explain with AI
+                </Button>
+            )}
         </Box>
     );
 };

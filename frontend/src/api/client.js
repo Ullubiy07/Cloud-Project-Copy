@@ -27,7 +27,7 @@ export async function apiRegister(username, email, password) {
 }
 
 export async function apiRequestReset(email) {
-    const res = await fetch(`${AUTH_URL}/internal/reset`, {
+    const res = await fetch(`${AUTH_URL}/request-reset`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
@@ -69,5 +69,18 @@ export async function apiGetRun(id) {
         headers: authHeader(),
     });
     if (!res.ok) throw new Error("Failed to fetch run status");
+    return res.json();
+}
+
+export async function apiExplain(code) {
+    const res = await fetch(`${EXEC_URL}/explain`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            ...authHeader(),
+        },
+        body: JSON.stringify({ code }),
+    });
+    if (!res.ok) throw new Error("Failed to explain code");
     return res.json();
 }
