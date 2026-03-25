@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"backend/internal/gigachat"
+	"backend/internal/model"
 	"backend/internal/token"
 )
 
@@ -23,7 +24,8 @@ func NewExplainHandler(client *gigachat.Client, tokenService *token.TokenService
 }
 
 type ExplainRequest struct {
-	Code string `json:"code"`
+	Code  string       `json:"code,omitempty"`
+	Files []model.File `json:"files,omitempty"`
 }
 
 func (h *ExplainHandler) extractUser(r *http.Request) (*token.Claims, error) {
@@ -60,12 +62,26 @@ func (h *ExplainHandler) ExplainCode(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	if strings.TrimSpace(req.Code) == "" {
-		h.respondWithError(w, http.StatusBadRequest, "Code cannot be empty")
+	var codeToExplain string
+
+	if len(req.Files) > 0 {
+		var codeBuilder strings.Builder
+		for _, f := range req.Files {
+			codeBuilder.WriteString("--- File: ")
+			codeBuilder.WriteString(f.Name)
+			codeBuilder.WriteString(" ---\n")
+			codeBuilder.WriteString(f.Content)
+			codeBuilder.WriteString("\n\n")
+		}
+		codeToExplain = codeBuilder.String()
+	} else if strings.TrimSpace(req.Code) != "" {
+		codeToExplain = req.Code
+	} else {
+		h.respondWithError(w, http.StatusBadRequest, "Either code or files must be provided")
 		return
 	}
 
-	explanation, err := h.client.ExplainCode(r.Context(), req.Code)
+	explanation, err := h.client.ExplainCode(r.Context(), codeToExplain)
 	if err != nil {
 		slog.Error("failed to get explanation from gigachat", slog.Any("error", err))
 		h.respondWithError(w, http.StatusInternalServerError, "Failed to analyze code")
