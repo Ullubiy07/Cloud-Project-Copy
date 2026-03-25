@@ -53,7 +53,7 @@ func New(cfg *config.Config) (*App, error) {
 	r.Post("/auth/register", authHandler.Register)
 	r.Post("/auth/login", authHandler.Login)
 	r.Post("/auth/reset-password", authHandler.ResetPassword)
-	r.Post("/auth/internal/reset", authHandler.InternalReset)
+	r.Post("/auth/request-reset", authHandler.InternalReset)
 
 	srv := &http.Server{
 		Addr:         ":" + cfg.Port,
