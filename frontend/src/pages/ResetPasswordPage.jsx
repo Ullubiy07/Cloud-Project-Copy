@@ -3,8 +3,9 @@ import {
     Box, VStack, Heading, FormControl, FormLabel,
     Input, Button, Text, FormErrorMessage, useToast,
 } from "@chakra-ui/react";
-import { useNavigate } from "react-router-dom";
- 
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { apiResetPassword } from "../api/client";
+
 const ResetPasswordPage = () => {
     const [password, setPassword] = useState("");
     const [confirm, setConfirm] = useState("");
@@ -13,7 +14,8 @@ const ResetPasswordPage = () => {
     const [done, setDone] = useState(false);
     const toast = useToast();
     const navigate = useNavigate();
- 
+    const [searchParams] = useSearchParams();
+
     const validate = () => {
         const e = {};
         if (!password) e.password = "Password is required";
@@ -23,15 +25,27 @@ const ResetPasswordPage = () => {
         setErrors(e);
         return Object.keys(e).length === 0;
     };
- 
+
     const handleSubmit = async () => {
         if (!validate()) return;
+
+        const token = searchParams.get("token");
+        if (!token) {
+            toast({ title: "Invalid or missing reset token.", status: "error", duration: 3000, isClosable: true });
+            return;
+        }
+
         setLoading(true);
-        await new Promise(r => setTimeout(r, 800));
-        setDone(true);
-        setLoading(false);
+        try {
+            await apiResetPassword(token, password);
+            setDone(true);
+        } catch (err) {
+            toast({ title: "Failed to reset password. Link may have expired.", status: "error", duration: 3000, isClosable: true });
+        } finally {
+            setLoading(false);
+        }
     };
- 
+
     return (
         <Box minH="100vh" bg="gray.900" display="flex" alignItems="center" justifyContent="center">
             <Box bg="gray.800" p={8} borderRadius="xl" w="full" maxW="400px" boxShadow="xl">
@@ -52,7 +66,7 @@ const ResetPasswordPage = () => {
                         <Text fontSize="sm" color="gray.400" textAlign="center">
                             Enter your new password below.
                         </Text>
- 
+
                         <FormControl isInvalid={!!errors.password}>
                             <FormLabel color="gray.300">New Password</FormLabel>
                             <Input
@@ -66,7 +80,7 @@ const ResetPasswordPage = () => {
                             />
                             <FormErrorMessage>{errors.password}</FormErrorMessage>
                         </FormControl>
- 
+
                         <FormControl isInvalid={!!errors.confirm}>
                             <FormLabel color="gray.300">Confirm Password</FormLabel>
                             <Input
@@ -81,7 +95,7 @@ const ResetPasswordPage = () => {
                             />
                             <FormErrorMessage>{errors.confirm}</FormErrorMessage>
                         </FormControl>
- 
+
                         <Button colorScheme="green" width="100%" onClick={handleSubmit} isLoading={loading}>
                             Change Password
                         </Button>
@@ -91,5 +105,5 @@ const ResetPasswordPage = () => {
         </Box>
     );
 };
- 
+
 export default ResetPasswordPage;
