@@ -17,13 +17,13 @@ import (
 )
 
 type AuthHandler struct {
-	storage        storage.UserStorage
+	storage      storage.UserStorage
 	tokenService *token.TokenService
 }
 
 func NewAuthHandler(storage storage.UserStorage, tokenService *token.TokenService) *AuthHandler {
 	return &AuthHandler{
-		storage:        storage,
+		storage:      storage,
 		tokenService: tokenService,
 	}
 }
@@ -187,4 +187,36 @@ func (h *AuthHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 		Status:  "ok",
 		Message: "Password updated successfully",
 	})
+}
+
+type InternalResetRequest struct {
+	Email string `json:"email"`
+}
+
+func (h *AuthHandler) InternalReset(w http.ResponseWriter, r *http.Request) {
+	var req InternalResetRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.respondWithError(w, http.StatusBadRequest, "Invalid request payload")
+		return
+	}
+
+	if req.Email == "" {
+		h.respondWithError(w, http.StatusBadRequest, "Email is required")
+		return
+	}
+
+	user, err := h.storage.GetUserByEmail(r.Context(), req.Email)
+	if err != nil {
+		h.respondWithError(w, http.StatusNotFound, "User not found")
+		return
+	}
+
+	tokenStr, err := h.tokenService.GenerateToken(user.ID, user.Username, user.Email)
+	if err != nil {
+		h.respondWithError(w, http.StatusInternalServerError, "Internal server error")
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(TokenResponse{Token: tokenStr})
 }
