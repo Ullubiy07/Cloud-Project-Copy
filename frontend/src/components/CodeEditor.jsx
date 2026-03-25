@@ -90,7 +90,15 @@ const CodeEditor = () => {
         throw new Error("Execution timed out");
     };
 
+    const LANGUAGE_MAP = {
+        cpp: "c++",
+    };
+
     const onRun = async () => {
+        if (!localStorage.getItem("token")) {
+            setOutput({ stderr: "Please log in to run code." });
+            return;
+        }
         const currentCode = editorRef.current.getValue();
         const updatedContents = {
             ...fileContents,
@@ -105,8 +113,10 @@ const CodeEditor = () => {
         setLoading(true);
         setOutput(null);
 
+        const mappedLanguage = LANGUAGE_MAP[language] ?? language;
+
         try {
-            const enqueued = await apiRun(language, activeFile.name, allFiles, stdin);
+            const enqueued = await apiRun(mappedLanguage, activeFile.name, allFiles, stdin);
             const id = enqueued.data?.id;
             if (!id) throw new Error("No run ID returned");
 
