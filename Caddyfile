@@ -8,7 +8,6 @@ lnkea.ru {
     }
     
     handle /n8n/* {
-        uri strip_prefix /n8n
         reverse_proxy n8n:5678
     }
 
