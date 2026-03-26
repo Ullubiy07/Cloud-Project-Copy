@@ -7,7 +7,15 @@ lnkea.ru {
         reverse_proxy backend-service:3001
     }
     
-    handle /n8n/* {
+    handle /n8n* {
+        reverse_proxy n8n:5678
+    }
+
+    handle /static/* {
+        reverse_proxy n8n:5678
+    }
+    
+    handle /rest/* {
         reverse_proxy n8n:5678
     }
 
