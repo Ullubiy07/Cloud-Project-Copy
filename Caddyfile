@@ -1,4 +1,4 @@
-ullubiy.dev {
+cloudeditor.ru {
     handle /auth/* {
         reverse_proxy auth-service:3000
     }
