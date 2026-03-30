@@ -18,7 +18,7 @@ services:
       context: ./backend/auth-service
       dockerfile: Dockerfile
     environment:
-      - DATABASE_URL=postgres://user:password@db:5432/auth_db?sslmode=disable
+      - DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@db:5432/auth_db?sslmode=disable
       - JWT_SECRET=${JWT_SECRET}
       - PORT=3000
     depends_on:
@@ -31,7 +31,7 @@ services:
       context: ./backend/backend-service
       dockerfile: Dockerfile
     environment:
-      - DATABASE_URL=postgres://user:password@db:5432/backend_db?sslmode=disable
+      - DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@db:5432/backend_db?sslmode=disable
       - JWT_SECRET=${JWT_SECRET}
       - PORT=3001
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
@@ -47,16 +47,16 @@ services:
   db:
     image: postgres:15-alpine
     environment:
-      - POSTGRES_USER=user
-      - POSTGRES_PASSWORD=password
-      - POSTGRES_DB=postgres
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./db-init:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d auth_db && pg_isready -U user -d backend_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d auth_db && pg_isready -U ${DB_USER} -d backend_db"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -75,7 +75,7 @@ services:
     environment:
       - N8N_HOST=0.0.0.0
       - N8N_PORT=5678
-      - WEBHOOK_URL=https://lnkea.ru/n8n/
+      - WEBHOOK_URL=https://ullubiy.dev/n8n/
     volumes:
       - n8n_data:/home/node/.n8n
     restart: unless-stopped

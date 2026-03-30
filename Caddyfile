@@ -1,4 +1,4 @@
-lnkea.ru {
+ullubiy.dev {
     handle /auth/* {
         reverse_proxy auth-service:3000
     }

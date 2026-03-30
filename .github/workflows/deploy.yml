@@ -47,6 +47,9 @@ jobs:
           echo 'AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}' >> ${{ env.ENV_FILE_PATH }} && \
           echo 'GIGACHAT_AUTH_KEY=${{ secrets.GIGACHAT_AUTH_KEY }}' >> ${{ env.ENV_FILE_PATH }} && \
           echo 'INTERNAL_API_SECRET=${{ secrets.INTERNAL_API_SECRET }}' >> ${{ env.ENV_FILE_PATH }} && \
+          echo 'DB_USER=${{ secrets.DB_USER }}' >> ${{ env.ENV_FILE_PATH }} && \
+          echo 'DB_PASSWORD=${{ secrets.DB_PASSWORD }}' >> ${{ env.ENV_FILE_PATH }} && \
+          echo 'DB_NAME=${{ secrets.DB_NAME }}' >> ${{ env.ENV_FILE_PATH }} && \
           echo 'AWS_REGION=ru-central1' >> ${{ env.ENV_FILE_PATH }}"
 
       - name: Start application with Docker Compose
