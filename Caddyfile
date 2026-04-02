@@ -12,7 +12,16 @@ cloudeditor.ru {
         reverse_proxy n8n:5678
     }
 
-    handle {
+    handle /editor* {
         reverse_proxy frontend:80
+    }
+    
+    handle /assets/* {
+        reverse_proxy frontend:80
+    }
+
+    handle {
+        root * /static
+        file_server
     }
 }
